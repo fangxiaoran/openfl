@@ -6,7 +6,8 @@ from unittest import mock
 from unittest import TestCase
 from pathlib import Path
 
-from openfl.interface.collaborator import start_, register_data_path
+from openfl.interface.collaborator import start_, register_data_path, \
+    generate_cert_request_
 
 
 @mock.patch('openfl.federated.Plan.parse')
@@ -63,3 +64,26 @@ def test_collaborator_register_data_path(mock_isfile):
     mock_isfile.return_value = True
     ret = register_data_path('one', 'path/data')
     assert ret is None
+
+
+def test_generate_cert_request():
+    current_path = Path(__file__).resolve()
+    plan_path = current_path.parent.joinpath('plan')
+    data_config = plan_path.joinpath('data.yaml')
+
+    ret = generate_cert_request_(['-n', 'one',
+                                  '-d', data_config], standalone_mode=False)
+    assert ret is None
+
+
+@mock.patch('openfl.interface.collaborator.is_directory_traversal')
+def test_generate_cert_request_illegal_path(mock_is_directory_traversal):
+    current_path = Path(__file__).resolve()
+    plan_path = current_path.parent.joinpath('plan')
+    data_config = plan_path.joinpath('data.yaml')
+
+    mock_is_directory_traversal.return_value = True
+
+    with TestCase.assertRaises(test_generate_cert_request_illegal_path, SystemExit):
+        generate_cert_request_(['-n', 'one',
+                                '-d', data_config], standalone_mode=False)
